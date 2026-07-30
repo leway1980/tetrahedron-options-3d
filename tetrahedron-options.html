@@ -49,11 +49,24 @@
     .reset:hover { background: white; transform: translateY(-1px); }
     .scene { position: relative; height: 330px; margin-top: -8px; touch-action: none; cursor: grab; }
     .scene:active { cursor: grabbing; }
+    .scene.two-finger-active { cursor: grabbing; }
     canvas { display: block; width: 100%; height: 100%; outline: none; }
     .hint { position: relative; z-index: 2; margin: -4px 16px 15px; padding-top: 10px; border-top: 1px solid rgba(35,58,89,.10); color: #627289; font-size: .77rem; line-height: 1.48; }
     .hint b { color: #31475f; }
     .note { margin-top: 21px; padding: 15px 17px; border-radius: 15px; background: rgba(255,255,255,.54); border: 1px solid rgba(35,58,89,.11); color: #53657c; font-size: .88rem; line-height: 1.66; }
     .note strong { color: #223d5a; }
+    .scroll-rail {
+      position: fixed; z-index: 20; right: max(8px, env(safe-area-inset-right)); top: 50%; transform: translateY(-50%);
+      width: 52px; min-height: 172px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+      border: 1px solid rgba(28,50,76,.18); border-radius: 18px; background: rgba(255,255,255,.88);
+      color: #465d78; box-shadow: 0 12px 30px rgba(32,55,84,.16), inset 0 1px 0 rgba(255,255,255,.95);
+      touch-action: none; user-select: none; -webkit-user-select: none; cursor: ns-resize; transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+    .scroll-rail::before { content:""; width: 3px; height: 44px; border-radius: 99px; background: linear-gradient(to bottom, #9db5d3 0 22%, transparent 22% 32%, #9db5d3 32% 68%, transparent 68% 78%, #9db5d3 78%); }
+    .scroll-rail .arrows { font-size: 1.08rem; font-weight: 900; letter-spacing: -.25em; transform: rotate(90deg); }
+    .scroll-rail small { font-size: .67rem; font-weight: 800; letter-spacing: .04em; line-height: 1.25; text-align: center; }
+    .scroll-rail.active { background: #e8f1ff; transform: translateY(-50%) scale(1.05); box-shadow: 0 14px 32px rgba(47,104,180,.24), inset 0 1px 0 white; }
+    .scroll-rail:focus-visible { outline: 3px solid rgba(67,135,238,.55); outline-offset: 3px; }
     @media (max-width: 860px) { .grid { grid-template-columns: 1fr; max-width: 520px; margin: auto; } .scene { height: 350px; } }
     @media (max-width: 480px) { .wrap { width: min(100% - 22px, 1180px); padding-top: 22px; } .scene { height: 310px; } .card-head { padding: 14px 14px 0; } .hint { margin-left: 14px; margin-right: 14px; } }
   </style>
@@ -62,7 +75,7 @@
   <main class="wrap">
     <div class="eyebrow"><i></i> 四面體辨識｜3D 操作版</div>
     <h1>把三個選項拿在手上轉一轉</h1>
-    <p class="lead">每張卡都是獨立的四面體。初始視角依照題目：可看到左、右、下方三個面；拖曳任一個模型即可從不同角度比對，顏色會跟著同一個數字固定不變。</p>
+    <p class="lead">每張卡都是獨立的四面體。初始視角依照題目：可看到左、右、下方三個面；顏色會跟著同一個數字固定不變。手機／平板需以兩指同時按住模型才會旋轉，右側滑塊則專門用來上下移動整頁。</p>
     <div class="legend" aria-label="數字顏色對照">
       <span class="chip"><span class="swatch" style="background:var(--one)"></span>1・藍</span>
       <span class="chip"><span class="swatch" style="background:var(--two)"></span>2・黃</span>
@@ -77,7 +90,7 @@
           <button class="reset" data-reset="a" type="button">回題圖視角</button>
         </header>
         <div id="scene-a" class="scene" role="img" aria-label="可旋轉的選項 A 四面體；數字 1 到 4 分別以藍黃綠紅標記"></div>
-        <div class="hint"><b>拖曳旋轉</b>　滾輪／雙指縮放　・　此視角的背面是 <b>4</b></div>
+        <div class="hint"><b>滑鼠：</b>拖曳旋轉　<b>觸控：</b>兩指按住後一起拉／扭轉　・　此視角的背面是 <b>4</b></div>
       </article>
       <article class="card card-b">
         <header class="card-head">
@@ -85,7 +98,7 @@
           <button class="reset" data-reset="b" type="button">回題圖視角</button>
         </header>
         <div id="scene-b" class="scene" role="img" aria-label="可旋轉的選項 B 四面體；數字 1 到 4 分別以藍黃綠紅標記"></div>
-        <div class="hint"><b>拖曳旋轉</b>　滾輪／雙指縮放　・　此視角的背面是 <b>2</b></div>
+        <div class="hint"><b>滑鼠：</b>拖曳旋轉　<b>觸控：</b>兩指按住後一起拉／扭轉　・　此視角的背面是 <b>2</b></div>
       </article>
       <article class="card card-c">
         <header class="card-head">
@@ -93,11 +106,14 @@
           <button class="reset" data-reset="c" type="button">回題圖視角</button>
         </header>
         <div id="scene-c" class="scene" role="img" aria-label="可旋轉的選項 C 四面體；數字 1 到 4 分別以藍黃綠紅標記"></div>
-        <div class="hint"><b>拖曳旋轉</b>　滾輪／雙指縮放　・　此視角的背面是 <b>1</b></div>
+        <div class="hint"><b>滑鼠：</b>拖曳旋轉　<b>觸控：</b>兩指按住後一起拉／扭轉　・　此視角的背面是 <b>1</b></div>
       </article>
     </section>
     <aside class="note"><strong>比對小提醒：</strong>轉動只能改變觀看方向，不能改變四個數字在四個面上的相對「左右順序」。把任兩個模型轉到同一組三個面，再看數字環繞頂點的順／逆時針方向，就能判斷是否真的相同。</aside>
   </main>
+  <div id="page-scroll-rail" class="scroll-rail" role="button" tabindex="0" aria-label="上下移動整個頁面：按住後上下拖曳">
+    <span class="arrows" aria-hidden="true">↕</span><small>上下<br>滑頁</small>
+  </div>
 
   <script type="importmap">
     { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }
@@ -197,6 +213,74 @@
       return new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: '#17263a', transparent: true, opacity: .9 }));
     }
 
+    // 觸控時以兩根手指作為「離合器」：移動兩指的中點可轉模型，
+    // 旋轉兩指連線可沿一開始鎖定的螢幕平面繞轉；單指不會碰到模型。
+    function installTwoFingerRotation(domElement, container, group, camera, controls) {
+      const fingers = new Map();
+      let gesture = null;
+      const point = (event) => ({ x: event.clientX, y: event.clientY });
+      const firstTwo = () => [...fingers.values()].slice(0, 2);
+      const getPose = () => {
+        const [a, b] = firstTwo();
+        const dx = b.x - a.x, dy = b.y - a.y;
+        return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, angle: Math.atan2(dy, dx) };
+      };
+      const beginGesture = () => {
+        if (fingers.size < 2) return;
+        const normal = new THREE.Vector3();
+        camera.getWorldDirection(normal).normalize();
+        gesture = {
+          ...getPose(),
+          right: new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).normalize(),
+          up: new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion).normalize(),
+          normal
+        };
+        container.classList.add('two-finger-active');
+      };
+      const normalizeAngle = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
+      const onDown = (event) => {
+        if (event.pointerType !== 'touch') return;
+        fingers.set(event.pointerId, point(event));
+        // 我們先在 capture 階段接手觸控，避免 OrbitControls 將單指誤判為旋轉。
+        try { domElement.setPointerCapture(event.pointerId); } catch (_) { /* 僅供非實體事件測試 */ }
+        controls.enabled = false;
+        if (fingers.size === 2) beginGesture();
+        event.preventDefault();
+      };
+      const onMove = (event) => {
+        if (event.pointerType !== 'touch' || !fingers.has(event.pointerId)) return;
+        fingers.set(event.pointerId, point(event));
+        if (fingers.size !== 2 || !gesture) { event.preventDefault(); return; }
+        const next = getPose();
+        const dx = next.x - gesture.x;
+        const dy = next.y - gesture.y;
+        const twist = normalizeAngle(next.angle - gesture.angle);
+        // 軸線在雙指按下時固定；模型因而沿同一個「平面」穩定旋轉。
+        const rotation = new THREE.Quaternion()
+          .multiply(new THREE.Quaternion().setFromAxisAngle(gesture.up, -dx * .010))
+          .multiply(new THREE.Quaternion().setFromAxisAngle(gesture.right, -dy * .010))
+          .multiply(new THREE.Quaternion().setFromAxisAngle(gesture.normal, -twist));
+        group.quaternion.premultiply(rotation).normalize();
+        gesture.x = next.x;
+        gesture.y = next.y;
+        gesture.angle = next.angle;
+        event.preventDefault();
+      };
+      const onUp = (event) => {
+        if (event.pointerType !== 'touch') return;
+        fingers.delete(event.pointerId);
+        if (fingers.size < 2) {
+          gesture = null;
+          container.classList.remove('two-finger-active');
+        }
+        if (!fingers.size) controls.enabled = true;
+      };
+      domElement.addEventListener('pointerdown', onDown, { passive: false, capture: true });
+      domElement.addEventListener('pointermove', onMove, { passive: false });
+      domElement.addEventListener('pointerup', onUp, { passive: false });
+      domElement.addEventListener('pointercancel', onUp, { passive: false });
+    }
+
     function makeScene(container, labels) {
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(37, 1, .1, 100);
@@ -237,14 +321,18 @@
       controls.maxDistance = 8;
       controls.rotateSpeed = .78;
       controls.zoomSpeed = .75;
+      controls.touches.ONE = THREE.TOUCH.NONE;
+      controls.touches.TWO = THREE.TOUCH.NONE;
       controls.target.set(0, -.04, 0);
       const home = new THREE.Vector3(0, .06, 6.0);
       function reset() {
+        group.quaternion.identity();
         camera.position.copy(home);
         controls.target.set(0, -.04, 0);
         controls.update();
       }
       reset();
+      installTwoFingerRotation(renderer.domElement, container, group, camera, controls);
 
       const resize = () => {
         const { width, height } = container.getBoundingClientRect();
@@ -264,7 +352,9 @@
         // 只顯示朝向觀看者的面；因此背面的數字不會穿透模型。
         stickers.forEach((sticker) => {
           const { normal, centroid } = sticker.userData;
-          sticker.visible = normal.dot(camera.position.clone().sub(centroid)) > 0;
+          const worldNormal = normal.clone().applyQuaternion(group.quaternion);
+          const worldCentroid = centroid.clone().applyQuaternion(group.quaternion).add(group.position);
+          sticker.visible = worldNormal.dot(camera.position.clone().sub(worldCentroid)) > 0;
         });
         renderer.render(scene, camera);
       }
@@ -278,6 +368,36 @@
     });
     document.querySelectorAll('[data-reset]').forEach(button => {
       button.addEventListener('click', () => views[button.dataset.reset].reset());
+    });
+    const pageScrollRail = document.getElementById('page-scroll-rail');
+    let railPointer = null;
+    let railLastY = 0;
+    const finishRail = () => {
+      railPointer = null;
+      pageScrollRail.classList.remove('active');
+    };
+    pageScrollRail.addEventListener('pointerdown', (event) => {
+      railPointer = event.pointerId;
+      railLastY = event.clientY;
+      try { pageScrollRail.setPointerCapture(event.pointerId); } catch (_) { /* 僅供非實體事件測試 */ }
+      pageScrollRail.classList.add('active');
+      event.preventDefault();
+    }, { passive: false });
+    pageScrollRail.addEventListener('pointermove', (event) => {
+      if (event.pointerId !== railPointer) return;
+      window.scrollBy(0, railLastY - event.clientY);
+      railLastY = event.clientY;
+      event.preventDefault();
+    }, { passive: false });
+    pageScrollRail.addEventListener('pointerup', finishRail);
+    pageScrollRail.addEventListener('pointercancel', finishRail);
+    pageScrollRail.addEventListener('keydown', (event) => {
+      if (!['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'].includes(event.key)) return;
+      const amount = event.key.includes('Up') ? -160 : event.key.includes('Down') ? 160 : 0;
+      if (event.key === 'Home') window.scrollTo({ top: 0, behavior: 'smooth' });
+      else if (event.key === 'End') window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+      else window.scrollBy({ top: amount, behavior: 'smooth' });
+      event.preventDefault();
     });
   </script>
 </body>
