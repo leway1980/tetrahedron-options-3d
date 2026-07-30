@@ -269,14 +269,13 @@
         renderer.render(scene, camera);
       }
       animate();
-      return { reset, camera, controls };
+      return { reset };
     }
 
     const views = {};
     Object.entries(MODELS).forEach(([key, labels]) => {
       views[key] = makeScene(document.getElementById(`scene-${key}`), labels);
     });
-    window.__tetraViews = views; // 開發驗證用：不影響操作介面。
     document.querySelectorAll('[data-reset]').forEach(button => {
       button.addEventListener('click', () => views[button.dataset.reset].reset());
     });
